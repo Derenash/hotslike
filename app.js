@@ -1,3 +1,19 @@
+const leftTeamCards = [];
+const rightTeamCards = [];
+
+function displayTeamCards(teamCards, containerId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = ""; // Clear previous cards
+
+  for (let i = 0; i < teamCards.length; i++) {
+    const talentCode = teamCards[i];
+    const card = createTalentCard();
+    displayTalentImages(talentCode, card);
+    card.classList.add('card');
+      container.appendChild(card);
+  }
+}
+
 // Function to generate a random integer between min and max
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -96,6 +112,7 @@ document.getElementById("generate-btn").addEventListener("click", () => {
 function createTalentCard() {
   const card = document.createElement("div");
   card.className = "card";
+  card.setAttribute("draggable", "true");
   return card;
 }
 
@@ -154,6 +171,17 @@ function displayTalentImages(talentCode, card) {
     img.alt = talent;
     talentsContainer.appendChild(img);
   }
+
+  card.setAttribute("data-talent-code", talentCode);
+
+  card.addEventListener("dragstart", (event) => {
+    event.dataTransfer.setData("text/plain", talentCode);
+    event.target.classList.add("dragging");
+  });
+
+  card.addEventListener("dragend", (event) => {
+    event.target.classList.remove("dragging");
+  });
 }
 
 
@@ -172,3 +200,50 @@ document.getElementById("generate-btn").addEventListener("click", () => {
     cardsContainer.appendChild(card);
   }
 });
+
+function handleTeamDrop(event, teamCards, containerId, removeFromTeam = false) {
+  event.preventDefault();
+  const talentCode = event.dataTransfer.getData("text/plain");
+
+  // Remove the dragged card from its original container
+  const sourceContainers = [document.getElementById("left-draft-container"), document.getElementById("right-draft-container"), document.getElementById("cards-container")];
+  for (let container of sourceContainers) {
+    for (let i = 0; i < container.children.length; i++) {
+      const card = container.children[i];
+      const cardTalentCode = card.getAttribute("data-talent-code");
+      if (cardTalentCode === talentCode) {
+        container.removeChild(card);
+        break;
+      }
+    }
+  }
+
+  // If removeFromTeam is true, remove the card from the teamCards array
+  if (removeFromTeam) {
+    teamCards = teamCards.filter((code) => code !== talentCode);
+  } else {
+    // Add the card to the target team
+    teamCards.push(talentCode);
+  }
+
+  // Display the updated container
+  displayTeamCards(teamCards, containerId);
+}
+
+
+document.getElementById("left-draft").addEventListener("dragover", (event) => {
+  event.preventDefault();
+});
+
+document.getElementById("right-draft").addEventListener("dragover", (event) => {
+  event.preventDefault();
+});
+
+document.getElementById("left-draft").addEventListener("drop", (event) => {
+  handleTeamDrop(event, leftTeamCards, "left-draft-container");
+});
+
+document.getElementById("right-draft").addEventListener("drop", (event) => {
+  handleTeamDrop(event, rightTeamCards, "right-draft-container");
+});
+
