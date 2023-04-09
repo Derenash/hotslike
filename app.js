@@ -165,7 +165,7 @@ document.getElementById("generate-btn").addEventListener("click", () => {
   const usedHeroes = [];
 
   // Generate 5 talent codes
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 6; i++) {
     const talentCode = generateRandomString(usedHeroes);
     const card = createTalentCard();
     displayTalentImages(talentCode, card);
