@@ -213,6 +213,29 @@ function handleTeamDrop(event, teamCards, containerId, removeFromTeam = false) {
       const cardTalentCode = card.getAttribute("data-talent-code");
       if (cardTalentCode === talentCode) {
         container.removeChild(card);
+
+        // Add a new card to the cards-container if the dragged card came from it
+        if (container.id === "cards-container") {
+          let newTalentCode;
+          let newHero;
+          do {
+            newTalentCode = generateRandomString(usedHeroes);
+            newHero = newTalentCode.match(/(?<=,)[^\]]+/)[0];
+          } while (Array.from(container.children).some((card) => card.getAttribute("data-talent-code").includes(newHero)));
+
+          const newCard = createTalentCard();
+          displayTalentImages(newTalentCode, newCard);
+
+          // Insert the new card at the original index
+          if (container.children.length === 0) {
+            container.appendChild(newCard);
+          } else if (i >= container.children.length) {
+            container.appendChild(newCard);
+          } else {
+            container.insertBefore(newCard, container.children[i]);
+          }
+        }
+
         break;
       }
     }
@@ -231,6 +254,7 @@ function handleTeamDrop(event, teamCards, containerId, removeFromTeam = false) {
 }
 
 
+
 document.getElementById("left-draft").addEventListener("dragover", (event) => {
   event.preventDefault();
 });
@@ -246,20 +270,6 @@ document.getElementById("left-draft").addEventListener("drop", (event) => {
 document.getElementById("right-draft").addEventListener("drop", (event) => {
   handleTeamDrop(event, rightTeamCards, "right-draft-container");
 });
-
-function getTalentCodesFromDrafts() {
-  const leftDraft = document.getElementById("left-draft-container");
-  const rightDraft = document.getElementById("right-draft-container");
-  const leftDraftCards = Array.from(leftDraft.children);
-  const rightDraftCards = Array.from(rightDraft.children);
-
-  const talentCodes = {
-    leftDraft: leftDraftCards.map((card) => card.getAttribute("data-talent-code")),
-    rightDraft: rightDraftCards.map((card) => card.getAttribute("data-talent-code")),
-  };
-
-  return talentCodes;
-}
 
 async function copy(message) {
   try {
