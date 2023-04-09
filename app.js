@@ -1,5 +1,6 @@
 const leftTeamCards = [];
 const rightTeamCards = [];
+const usedHeroes = [];
 
 function displayTeamCards(teamCards, containerId) {
   const container = document.getElementById(containerId);
@@ -60,7 +61,6 @@ function generateRandomString(usedHeroes) {
     let invalidTalents = [];
     do {
       chosenTalent = getRandomInt(1, maxTalentIndex);
-      console.log(randomNumbers)
       if (i === 6) {
         const Ultimate = randomNumbers[3];
 
@@ -245,5 +245,53 @@ document.getElementById("left-draft").addEventListener("drop", (event) => {
 
 document.getElementById("right-draft").addEventListener("drop", (event) => {
   handleTeamDrop(event, rightTeamCards, "right-draft-container");
+});
+
+function getTalentCodesFromDrafts() {
+  const leftDraft = document.getElementById("left-draft-container");
+  const rightDraft = document.getElementById("right-draft-container");
+  const leftDraftCards = Array.from(leftDraft.children);
+  const rightDraftCards = Array.from(rightDraft.children);
+
+  const talentCodes = {
+    leftDraft: leftDraftCards.map((card) => card.getAttribute("data-talent-code")),
+    rightDraft: rightDraftCards.map((card) => card.getAttribute("data-talent-code")),
+  };
+
+  return talentCodes;
+}
+
+async function copy(message) {
+  try {
+    await navigator.clipboard.writeText(message);
+    console.log("Talent codes copied to clipboard.");
+  } catch (err) {
+    console.error("Failed to copy talent codes to clipboard.", err);
+  }
+}
+
+// Add event listeners for the draft icons
+document.getElementById("left-draft-icon").addEventListener("click", () => {
+  const draft = document.getElementById("left-draft-container");
+  const cards = Array.from(draft.children);
+  const talents = cards.map((card) => card.getAttribute("data-talent-code"));
+  let message = `Left Team - \n`;
+  talents.forEach((code, index) => {
+    message += `:ghostboogie: ${code}\n`;
+  })
+  console.log(message);
+  copy(message)
+});
+
+document.getElementById("right-draft-icon").addEventListener("click", () => {
+  const draft = document.getElementById("right-draft-container");
+  const cards = Array.from(draft.children);
+  const talents = cards.map((card) => card.getAttribute("data-talent-code"));
+  let message = `Right Team - \n`;
+  talents.forEach((code, index) => {
+    message += `:ghostboogie: ${code}\n`
+  })
+  console.log(message);
+  copy(message)
 });
 
