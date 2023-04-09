@@ -12,7 +12,7 @@ const heroRoles = {
   "blaze": "bruiser",
   "brightwing": "healer",
   "cassia": "ranged",
-  "chen": "tank",
+  "chen": "bruiser",
   "cho": "tank",
   "chromie": "ranged",
   "dva": "bruiser",
@@ -31,7 +31,7 @@ const heroRoles = {
   "guldan": "ranged",
   "hanzo": "ranged",
   "hogger": "bruiser",
-  "illidan": "melee",
+  "illidan": "bruiser",
   "imperius": "bruiser",
   "jaina": "ranged",
   "johanna": "tank",
@@ -81,7 +81,7 @@ const heroRoles = {
   "uther": "healer",
   "valeera": "melee",
   "valla": "ranged",
-  "varian": "multiclass",
+  "varian": "tank",
   "whitemane": "healer",
   "xul": "bruiser",
   "yrel": "bruiser",
@@ -90,3 +90,15 @@ const heroRoles = {
   "zeratul": "melee",
   "zuljin": "ranged"
 };
+
+function filterHeroesByRole(role) {
+  return Object.entries(heroRoles)
+    .filter(([_, heroRole]) => heroRole === role)
+    .map(([hero, _]) => hero);
+}
+
+const melee = filterHeroesByRole("melee");
+const healer = filterHeroesByRole("healer");
+const tank = filterHeroesByRole("tank");
+const bruiser = filterHeroesByRole("bruiser");
+const ranged = filterHeroesByRole("ranged");

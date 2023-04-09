@@ -1,15 +1,43 @@
-const leftTeamCards = [];
-const rightTeamCards = [];
-const usedHeroes = [];
+let lftCards = [];
+let rgtCards = [];
+let midCards = [];
+let draggedCard = null;
+let dragOrigin = null;
+
+function sortHeroesByRole(heroes) {
+  const roleOrder = ["tank", "ranged", "melee", "healer", "bruiser"];
+  const sortedHeroes = {
+    tank: [],
+    ranged: [],
+    melee: [],
+    healer: [],
+    bruiser: [],
+  };
+
+  heroes.forEach((hero) => {
+    const role = heroRoles[hero.match(/(?<=,)[^\]]+/)[0]];
+    sortedHeroes[role].push(hero);
+  });
+
+  let orderedHeroes = [];
+  roleOrder.forEach((role) => {
+    orderedHeroes = orderedHeroes.concat(sortedHeroes[role]);
+  });
+
+  return orderedHeroes;
+}
+
+
 
 function displayTeamCards(teamCards, containerId) {
+  const sortedCards = sortHeroesByRole(teamCards)
   const container = document.getElementById(containerId);
   container.innerHTML = ""; // Clear previous cards
 
-  for (let i = 0; i < teamCards.length; i++) {
-    const talentCode = teamCards[i];
+  for (let i = 0; i < sortedCards.length; i++) {
+    const talentCode = sortedCards[i];
     const card = createTalentCard();
-    displayTalentImages(talentCode, card);
+    displayTalentImages(talentCode, card, containerId);
     card.classList.add('card');
       container.appendChild(card);
   }
@@ -102,12 +130,6 @@ function generateRandomString(usedHeroes) {
 }
 
 
-
-// Event listener for the generate button
-document.getElementById("generate-btn").addEventListener("click", () => {
-  document.getElementById("random-hero").textContent = generateRandomString();
-});
-
 // Function to create a talent card element
 function createTalentCard() {
   const card = document.createElement("div");
@@ -126,7 +148,7 @@ function getHeroImageSrc(heroName) {
 }
 
 // Function to display the images of a talent code on a card
-function displayTalentImages(talentCode, card) {
+function displayTalentImages(talentCode, card, containerId) {
   const heroName = talentCode.match(/(?<=,)[^\]]+/)[0];
   const talents = heroes_talents[heroName];
   const talentNumbers = talentCode.match(/\d+/g)[0];
@@ -175,7 +197,8 @@ function displayTalentImages(talentCode, card) {
   card.setAttribute("data-talent-code", talentCode);
 
   card.addEventListener("dragstart", (event) => {
-    event.dataTransfer.setData("text/plain", talentCode);
+    dragOrigin = containerId;
+    draggedCard = talentCode;
     event.target.classList.add("dragging");
   });
 
@@ -184,73 +207,89 @@ function displayTalentImages(talentCode, card) {
   });
 }
 
+function getNeededRoles() {
+  const rolesPresent = midCards.map(
+    (card) => heroRoles[card.match(/(?<=,)[^\]]+/)[0]]
+  );
+  const neededRoles = ['melee', 'healer', 'tank', 'bruiser', 'ranged'].filter(
+    (role) => !rolesPresent.includes(role)
+  );
+  return neededRoles;
+}
+
+function midNewCard() {
+  const usedHeroes = midCards
+    .filter((card) => card)
+    .map((card) => card.match(/(?<=,)[^\]]+/)[0]);
+  const leftHeroes = lftCards
+    .filter((card) => card)
+    .map((card) => card.match(/(?<=,)[^\]]+/)[0]);
+  const rightHeroes = rgtCards
+    .filter((card) => card)
+    .map((card) => card.match(/(?<=,)[^\]]+/)[0]);
+  const allUsedHeroes = usedHeroes.concat(leftHeroes, rightHeroes);
+  const neededRoles = getNeededRoles()
+
+  let newTalentCode;
+  do {
+    newTalentCode = generateRandomString(allUsedHeroes);
+    const newHero = newTalentCode.match(/(?<=,)[^\]]+/)[0];
+    const newHeroRole = heroRoles[newHero];
+
+    if (neededRoles.includes(newHeroRole) || (neededRoles.length === 0)) {
+      midCards.push(newTalentCode);
+      displayTeamCards(midCards, "cards-container");
+      break;
+    }
+  } while ((true));
+}
+
 
 // Event listener for the generate button
 document.getElementById("generate-btn").addEventListener("click", () => {
   const cardsContainer = document.getElementById("cards-container");
   cardsContainer.innerHTML = ""; // Clear previous cards
-
+  midCards.length = 0
   const usedHeroes = [];
 
   // Generate 5 talent codes
   for (let i = 0; i < 6; i++) {
-    const talentCode = generateRandomString(usedHeroes);
-    const card = createTalentCard();
-    displayTalentImages(talentCode, card);
-    cardsContainer.appendChild(card);
+    midNewCard()
   }
+  displayTeamCards(midCards, "cards-container");
 });
 
-function handleTeamDrop(event, teamCards, containerId, removeFromTeam = false) {
+function handleTeamDrop(event, targetDrop) {
   event.preventDefault();
-  const talentCode = event.dataTransfer.getData("text/plain");
 
-  // Remove the dragged card from its original container
-  const sourceContainers = [document.getElementById("left-draft-container"), document.getElementById("right-draft-container"), document.getElementById("cards-container")];
-  for (let container of sourceContainers) {
-    for (let i = 0; i < container.children.length; i++) {
-      const card = container.children[i];
-      const cardTalentCode = card.getAttribute("data-talent-code");
-      if (cardTalentCode === talentCode) {
-        container.removeChild(card);
+  if (targetDrop !== dragOrigin) {
 
-        // Add a new card to the cards-container if the dragged card came from it
-        if (container.id === "cards-container") {
-          let newTalentCode;
-          let newHero;
-          do {
-            newTalentCode = generateRandomString(usedHeroes);
-            newHero = newTalentCode.match(/(?<=,)[^\]]+/)[0];
-          } while (Array.from(container.children).some((card) => card.getAttribute("data-talent-code").includes(newHero)));
-
-          const newCard = createTalentCard();
-          displayTalentImages(newTalentCode, newCard);
-
-          // Insert the new card at the original index
-          if (container.children.length === 0) {
-            container.appendChild(newCard);
-          } else if (i >= container.children.length) {
-            container.appendChild(newCard);
-          } else {
-            container.insertBefore(newCard, container.children[i]);
-          }
-        }
-
-        break;
-      }
+    if (targetDrop === "left-draft-container") {
+      lftCards.push(draggedCard);
+      displayTeamCards(lftCards, targetDrop);
+    } else 
+    if (targetDrop === "right-draft-container") {
+      rgtCards.push(draggedCard);
+      displayTeamCards(rgtCards, targetDrop);
     }
-  }
+    
+    if (dragOrigin === "cards-container") {
+      midCards = midCards.filter((code) => code !== draggedCard);
+      midNewCard()
+      displayTeamCards(midCards, dragOrigin);
+    } else
+    if (dragOrigin === "left-draft-container") {
+      lftCards = lftCards.filter((code) => code !== draggedCard);
+      displayTeamCards(lftCards, dragOrigin);
+    } else 
+    if (dragOrigin === "right-draft-container") {
+      rgtCards = rgtCards.filter((code) => code !== draggedCard);
+      displayTeamCards(rgtCards, dragOrigin);
+    }
 
-  // If removeFromTeam is true, remove the card from the teamCards array
-  if (removeFromTeam) {
-    teamCards = teamCards.filter((code) => code !== talentCode);
-  } else {
-    // Add the card to the target team
-    teamCards.push(talentCode);
+    draggedCard = null;
+    dragOrigin = null;
   }
-
-  // Display the updated container
-  displayTeamCards(teamCards, containerId);
 }
 
 
@@ -263,12 +302,20 @@ document.getElementById("right-draft").addEventListener("dragover", (event) => {
   event.preventDefault();
 });
 
+document.getElementById("cards-container").addEventListener("dragover", (event) => {
+  event.preventDefault();
+});
+
 document.getElementById("left-draft").addEventListener("drop", (event) => {
-  handleTeamDrop(event, leftTeamCards, "left-draft-container");
+  handleTeamDrop(event, "left-draft-container");
 });
 
 document.getElementById("right-draft").addEventListener("drop", (event) => {
-  handleTeamDrop(event, rightTeamCards, "right-draft-container");
+  handleTeamDrop(event, "right-draft-container");
+});
+
+document.getElementById("cards-container").addEventListener("drop", (event) => {
+  handleTeamDrop(event, "cards-container");
 });
 
 async function copy(message) {
