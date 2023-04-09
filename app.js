@@ -101,11 +101,11 @@ function createTalentCard() {
 
 // Functions to get the image source of a talent or hero
 function getImageSrc(talent) {
-  return `heroes/abilitytalents/${talent}.png`;
+  return `abilitytalents/${talent}.png`;
 }
 
 function getHeroImageSrc(heroName) {
-  return `heroes/heroportraits/ui_targetportrait_hero_${heroName}.png`;
+  return `heroportraits/ui_targetportrait_hero_${heroName}.png`;
 }
 
 // Function to display the images of a talent code on a card
