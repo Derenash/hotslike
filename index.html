@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Hero Talent Builder</title>
+    <style>
+        body {
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100vh;
+            background-image: linear-gradient(180deg, #2e222f 0%, #3e3546 100%);
+        }
+
+        h1 {
+            color: #ffffff;
+            text-shadow: 2px 2px 4px #000000;
+        }
+
+        button {
+            width: 250px;
+            background-color: #0eaf9b;
+            color: #ffffff;
+            font-size: 16px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 2px solid #165a4c;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background-color: #165a4c;
+            border: 2px solid #0eaf9b;
+        }
+
+        .card {
+            background-color: #625565;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            width: 250px;
+            height: 300px;
+            border: 6px solid #000000;
+        }
+
+        .card .firstRow {
+            background-image: linear-gradient(180deg, #7f708a 96%, #625565 100%);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            height: 80%;
+            flex-direction: row;
+            align-items: center;
+            margin-bottom: -2%;
+            border-radius: 5% 5% 0% 0%;
+        }
+
+        .card .hero {
+            width:  36%;
+            height: auto;
+            margin: 1px 7px;
+            border: 5px solid #706279;
+            border-radius: 3%;
+        }
+
+        .card .firstRow img {
+            width:  36%;
+            height: auto;
+            margin: 1px 7px;
+            border: 5px solid #706279;
+            border-radius: 3%;
+        }
+
+        .card .talents {
+          display: flex;
+          margin: 10px;
+          flex-direction: row;
+          flex-wrap: wrap;
+          justify-content: space-evenly;
+          align-items: space-evenly;
+          padding: 2% 0;
+          border-radius: 3%;
+        }
+
+        .card .talents img {
+            width: 30%;
+            height: auto;
+            margin: 0px 0;
+            border: 3px solid #4a404c;
+        }
+    </style>
+</head>
+<body>
+    <h1>Random Hero Talent Builder</h1>
+    <div id="full-screen" style="width: 100vw; height: 100vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: center;">
+      <button id="generate-btn">Generate</button>
+      <div id="cards-container" style="width: 1000px; padding-top: 30px; height: auto; display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 20px;"></div>
+    </div>
+    <script src="heroes_talents.js"></script>
+    <script src="heroes.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
