@@ -72,7 +72,7 @@ const heroes = [
   "sylvanas",
   "tassadar",
   "thebutcher",
-  "thelostvikings",
+  "lostvikings",
   "thrall",
   "tracer",
   "tychus",

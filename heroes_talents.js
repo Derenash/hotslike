@@ -3024,7 +3024,7 @@ const heroes_talents =
 		]
 	],
 
-	thelostvikings:
+	lostvikings:
 	[
 		[
 			"storm_ui_icon_lostvikings_selectolaf",

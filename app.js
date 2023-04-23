@@ -3,6 +3,29 @@ let rgtCards = [];
 let midCards = [];
 let draggedCard = null;
 let dragOrigin = null;
+let pickRoutine = [[1, 2, 2, 1], [1, 2, 1]]
+let mapRoutine = []
+let currentTurn = null;
+let randomMaps = [];
+let reroll = [1, 1];
+
+const maps = [
+  "alterac-pass",
+  "battlefield-of-eternity",
+  // "blackhearts-bay",
+  "braxis-holdout",
+  "cursed-hollow",
+  "dragon-shire",
+  "garden-of-terror",
+  "hanamura-temple",
+  // "haunted-mines",
+  "infernal-shrines",
+  "sky-temple",
+  "tomb-of-the-spider-queen",
+  "towers-of-doom",
+  "volskaya-foundry",
+  // "warhead-junction"
+];
 
 function sortHeroesByRole(heroes) {
   const roleOrder = ["tank", "ranged", "melee", "healer", "bruiser"];
@@ -13,7 +36,6 @@ function sortHeroesByRole(heroes) {
     healer: [],
     bruiser: [],
   };
-
   heroes.forEach((hero) => {
     const role = heroRoles[hero.match(/(?<=,)[^\]]+/)[0]];
     sortedHeroes[role].push(hero);
@@ -204,18 +226,36 @@ function displayTalentImages(talentCode, card, containerId) {
 
   card.addEventListener("dragend", (event) => {
     event.target.classList.remove("dragging");
+    draggedCard = null;
+    dragOrigin = null;
   });
 }
-
 function getNeededRoles() {
+  const requiredRoles = {
+    'melee': 1,
+    'healer': 1,
+    'tank': 1,
+    'bruiser': 1,
+    'ranged': 2,
+  };
+
   const rolesPresent = midCards.map(
     (card) => heroRoles[card.match(/(?<=,)[^\]]+/)[0]]
   );
-  const neededRoles = ['melee', 'healer', 'tank', 'bruiser', 'ranged'].filter(
-    (role) => !rolesPresent.includes(role)
-  );
+
+  const roleCounts = rolesPresent.reduce((acc, role) => {
+    acc[role] = (acc[role] || 0) + 1;
+    return acc;
+  }, {});
+
+  const neededRoles = Object.entries(requiredRoles).filter(([role, requiredCount]) => {
+    const presentCount = roleCounts[role] || 0;
+    return presentCount < requiredCount;
+  }).map(([role, _]) => role);
+
   return neededRoles;
 }
+
 
 function midNewCard() {
   const usedHeroes = midCards
@@ -246,50 +286,161 @@ function midNewCard() {
 
 
 // Event listener for the generate button
-document.getElementById("generate-btn").addEventListener("click", () => {
-  const cardsContainer = document.getElementById("cards-container");
-  cardsContainer.innerHTML = ""; // Clear previous cards
-  midCards.length = 0
-  const usedHeroes = [];
+document.getElementById("btn-lft").addEventListener("click", () => {
+  if ((reroll[0] > 0) && (currentTurn !== "right")) {
+    reroll[0] -= 1
+    const cardsContainer = document.getElementById("cards-container");
+    cardsContainer.innerHTML = ""; // Clear previous cards
+    midCards.length = 0
 
-  // Generate 5 talent codes
-  for (let i = 0; i < 6; i++) {
-    midNewCard()
+    // Generate 5 talent codes
+    rerollCards()
+    updateRerollButtons()
   }
-  displayTeamCards(midCards, "cards-container");
 });
+
+document.getElementById("btn-rgt").addEventListener("click", () => {
+  if ((reroll[1] > 0) && (currentTurn !== "left"))  {
+    reroll[1] -= 1
+    const cardsContainer = document.getElementById("cards-container");
+    cardsContainer.innerHTML = ""; // Clear previous cards
+    midCards.length = 0
+
+    rerollCards()
+    updateRerollButtons()
+  }
+});
+
+function displayMapIcons(containerId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = ""; // Clear previous content
+  
+  // Display the maps of that index
+  randomMaps.forEach((index) => {
+    const mapIcon = document.createElement("img");
+    mapIcon.src = 'map_icons/' + maps[index] + '.jpg';
+    mapIcon.alt = `map${index + 1}`;
+    mapIcon.className = "map-icon";
+    mapIcon.setAttribute("data-map-index", index);
+
+    mapIcon.addEventListener("click", (event) => {
+      handleMapBan(index);
+    });
+
+    container.appendChild(mapIcon);
+  });
+}
+
+function removeElement(arr, elem) {
+  return arr.filter(item => item !== elem);
+}
+
+function handleMapBan(mapIndex) {
+  if (randomMaps.length === 1) {
+    return;
+  }
+  randomMaps = removeElement(randomMaps, mapIndex);
+  displayMapIcons("cards-container");
+  mapRoutine[0] -= 1;
+  if (mapRoutine[0] === 0) {
+    mapRoutine.shift();
+    currentTurn = currentTurn === 'right' ? 'left' : 'right' 
+    if (mapRoutine.length === 0) {
+      const cardsContainer = document.getElementById("cards-container");
+      cardsContainer.innerHTML = ""; // Clear previous cards
+      midCards.length = 0
+      rerollCards()
+
+      reroll = [1, 1]
+      updateRerollButtons()
+      // Switch to the next pick phase
+      console.log("finished map phase");
+      displayMapIcons("map-container")
+      displayTeamCards(midCards, "cards-container");
+    }
+  }
+  updateDraftHighlight();
+}
+
+
 
 function handleTeamDrop(event, targetDrop) {
   event.preventDefault();
 
-  if (targetDrop !== dragOrigin) {
-
-    if (targetDrop === "left-draft-container") {
-      lftCards.push(draggedCard);
-      displayTeamCards(lftCards, targetDrop);
-    } else 
-    if (targetDrop === "right-draft-container") {
-      rgtCards.push(draggedCard);
-      displayTeamCards(rgtCards, targetDrop);
-    }
-    
-    if (dragOrigin === "cards-container") {
-      midCards = midCards.filter((code) => code !== draggedCard);
-      midNewCard()
-      displayTeamCards(midCards, dragOrigin);
-    } else
-    if (dragOrigin === "left-draft-container") {
-      lftCards = lftCards.filter((code) => code !== draggedCard);
-      displayTeamCards(lftCards, dragOrigin);
-    } else 
-    if (dragOrigin === "right-draft-container") {
-      rgtCards = rgtCards.filter((code) => code !== draggedCard);
-      displayTeamCards(rgtCards, dragOrigin);
-    }
-
-    draggedCard = null;
-    dragOrigin = null;
+  if (draggedCard === null) {
+    return;
   }
+  if (randomMaps.length > 1) {  
+    // handleMapBan(targetDrop);
+    return;
+  }
+  // Check if the current turn matches the target drop container or if the current turn is null
+  if ((currentTurn === null) || (currentTurn === "left" && targetDrop === "left-draft-container") || (currentTurn === "right" && targetDrop === "right-draft-container")) {
+    if (targetDrop !== dragOrigin) {
+
+      if (targetDrop === "left-draft-container") {
+        lftCards.push(draggedCard);
+        displayTeamCards(lftCards, targetDrop);
+      } else if (targetDrop === "right-draft-container") {
+        rgtCards.push(draggedCard);
+        displayTeamCards(rgtCards, targetDrop);
+      }
+
+      if (dragOrigin === "cards-container") {
+        midCards = midCards.filter((code) => code !== draggedCard);
+        midNewCard()
+        displayTeamCards(midCards, dragOrigin);
+      } else if (dragOrigin === "left-draft-container") {
+        lftCards = lftCards.filter((code) => code !== draggedCard);
+        displayTeamCards(lftCards, dragOrigin);
+      } else if (dragOrigin === "right-draft-container") {
+        rgtCards = rgtCards.filter((code) => code !== draggedCard);
+        displayTeamCards(rgtCards, dragOrigin);
+      }
+
+      draggedCard = null;
+      dragOrigin = null;
+      if ((currentTurn === null) && (targetDrop != "cards-container")) {
+        currentTurn = targetDrop === "left-draft-container" ? 'left' : 'right';
+      }
+      pickRoutine[0][0] -= 1
+      // If current player's pick turn has ended
+      if (pickRoutine[0][0] === 0) {
+        // Remove current turn from turn list
+        pickRoutine[0].shift();
+        // Invert player turn
+        currentTurn = targetDrop === "left-draft-container" ? 'right' : targetDrop === "right-draft-container" ? 'left' : currentTurn;
+        // If a phase ends
+        if (pickRoutine[0].length === 0) {
+          // Creates 3 maps
+          currentTurn = currentTurn === 'right' ? 'left' : 'right' 
+          reroll = [0, 0];
+          pickRoutine.shift();
+          if (pickRoutine.length === 0) {
+            currentTurn = null;
+            updateRerollButtons();
+            updateDraftHighlight();
+            const container = document.getElementById("cards-container");
+            container.innerHTML = ""; // Clear previous content
+            return;
+          } else {
+            // reroll = [0, 0]
+            mapRoutine = [1, 1]
+            while (randomMaps.length < 3) {
+              let randomNumber = Math.floor(Math.random() * maps.length);
+              if (!randomMaps.includes(randomNumber)) {
+                randomMaps.push(randomNumber);
+              }
+            }
+          }
+          displayMapIcons("cards-container");
+          console.log("finished first pick phase")
+        }
+      }
+    }
+  }
+  updateDraftHighlight()
+  updateRerollButtons()
 }
 
 
@@ -352,3 +503,52 @@ document.getElementById("right-draft-icon").addEventListener("click", () => {
   copy(message)
 });
 
+function updateRerollButtons() {
+  const leftRerollButton = document.getElementById("btn-lft");
+  const rightRerollButton = document.getElementById("btn-rgt");
+
+  // Update left reroll button
+  if (reroll[0] > 0 && currentTurn !== "right") {
+    leftRerollButton.style.backgroundColor = "#0eaf9b";
+    leftRerollButton.style.cursor = "pointer";
+  } else {
+    leftRerollButton.style.backgroundColor = "gray";
+    leftRerollButton.style.cursor = "not-allowed";
+  }
+  leftRerollButton.querySelector(".reroll-count").textContent = reroll[0];
+
+  // Update right reroll button
+  if (reroll[1] > 0 && currentTurn !== "left") {
+    rightRerollButton.style.backgroundColor = "#0eaf9b";
+    rightRerollButton.style.cursor = "pointer";
+  } else {
+    rightRerollButton.style.backgroundColor = "gray";
+    rightRerollButton.style.cursor = "not-allowed";
+  }
+  rightRerollButton.querySelector(".reroll-count").textContent = reroll[1];
+}
+
+// Call the updateRerollButtons function initially
+updateRerollButtons();
+
+// Generate 5 talent codes
+function rerollCards() {
+  for (let i = 0; i < 6; i++) {
+    midNewCard()
+  }
+  displayTeamCards(midCards, "cards-container");
+}
+
+rerollCards()
+
+function updateDraftHighlight() {
+  const body = document.body;
+
+  if (currentTurn === "left") {
+    body.style.backgroundImage = "linear-gradient(90deg, #22262f 0%, #22262f 25%, #2e222f 35%, #2e222f 100%)";
+  } else if (currentTurn === "right") {
+    body.style.backgroundImage = "linear-gradient(270deg, #22262f 0%, #22262f 25%, #2e222f 35%, #2e222f 100%)";
+  } else {
+    body.style.backgroundImage = "linear-gradient(90deg, #22262f 0%, #22262f 25%, #2e222f 35%, #2e222f 65%, #22262f 75%, #22262f 100%)";
+  }
+}
